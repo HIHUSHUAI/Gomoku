@@ -25,6 +25,9 @@ class AIProcessManager:
     def stop_process(self):
         """停止 AI 进程。"""
         if self.process:
-            self.process.terminate()
-            self.process.wait()
+            self.process.terminate()  # 尝试正常终止
+            try:
+                self.process.wait(timeout=1)  # 给予一些时间进行清理
+            except subprocess.TimeoutExpired:
+                self.process.kill()  # 如果进程没有在给定时间内结束，强制终止
             self.process = None

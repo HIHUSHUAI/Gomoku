@@ -12,8 +12,10 @@ class AICommunicator:
         self.parent_conn, self.child_conn = Pipe()
 
         # 创建并启动线程来读取 AI 的标准输出和错误输出
-        threading.Thread(target=self.handle_ai_output, args=(self.stdout,)).start()
-        threading.Thread(target=self.handle_ai_output, args=(self.stderr,)).start()
+        self.output_thread = threading.Thread(target=self.handle_ai_output, args=(self.stdout,))
+        self.error_thread = threading.Thread(target=self.handle_ai_output, args=(self.stderr,))
+        self.output_thread.start()
+        self.error_thread.start()
 
     def handle_ai_output(self, pipe):
         """处理 AI 的标准输出或错误输出。"""
@@ -38,3 +40,10 @@ class AICommunicator:
         while self.child_conn.poll(timeout):
             responses.append(self.child_conn.recv())
         return '\n'.join(responses)
+
+    def close(self):
+        self.output_thread.join()
+        self.error_thread.join()
+        self.stdin.close()
+        self.stdout.close()
+        self.stderr.close()

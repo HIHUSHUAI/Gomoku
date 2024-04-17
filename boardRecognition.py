@@ -1,3 +1,5 @@
+from typing import Tuple, Any
+
 import cv2
 import numpy as np
 import pygetwindow as gw
@@ -21,7 +23,7 @@ class boardRecognition:
 
     def get_screen(self):
         # 将窗口置于前台（可选，取决于系统和权限）
-        self.window.activate()
+        # self.window.activate()
         # self.window.restore()
         screenshot = pyautogui.screenshot(region=self.window.box)
         # 将屏幕截图转换为OpenCV图像格式
@@ -39,6 +41,18 @@ class boardRecognition:
     # # 二值化
     # _, binary_image = cv2.threshold(blur, 235, 255, cv2.THRESH_BINARY)
     # # cv2.THRESH_BINARY + cv2.THRESH_OTSU
+
+    def get_screen_binarization(self, screenshot_cv):
+        # 图像处理
+        gray = cv2.cvtColor(screenshot_cv, cv2.COLOR_BGR2GRAY)
+        blur = cv2.GaussianBlur(gray, (3, 3), 0)
+        # adjusted = cv2.convertScaleAbs(gray, alpha=1.3, beta=-350)
+        _, binary_image_white = cv2.threshold(blur, 235, 255, cv2.THRESH_BINARY)
+        binary_image_white_ = cv2.bitwise_not(binary_image_white)
+        _, binary_image_black = cv2.threshold(blur, 150, 255, cv2.THRESH_BINARY)
+        binary_image_white_and_black = cv2.bitwise_xor(binary_image_white_, binary_image_black)
+
+        return binary_image_white, binary_image_black, binary_image_white_and_black
 
     def get_point_coordinates(self):
         """生成棋盘点位,return->字典{(x,y):[0,p_x,p_y]}"""
@@ -61,12 +75,20 @@ class boardRecognition:
             cv2.circle(screenshot_cv, (x, y), radius=10, color=(0, 0, 255), thickness=1)
         return screenshot_cv
 
-    def find_new_point(self, screenshot_cv, boardDict, is_playFirst, update_all=False):
-        gray = cv2.cvtColor(screenshot_cv, cv2.COLOR_BGR2GRAY)
-        # blur = cv2.GaussianBlur(gray, (3, 3), 0)
-        adjusted = cv2.convertScaleAbs(gray, alpha=1.3, beta=-120)
+    def find_new_point(self, screenshot_cv, boardDict, is_playFirst, update_all=False, is_show_testResults=False):
+        binary_image_white_and_black = self.get_screen_binarization(screenshot_cv)[2]
+        # binary_image = cv2.GaussianBlur(binary_image_white_and_black, (13, 13), 0)
+        binary_image = cv2.GaussianBlur(binary_image_white_and_black, (3, 3), 0)
+        if is_show_testResults:
+            cv2.imshow('Window binary_image', binary_image)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
+
         # 检测圆形
-        circles = cv2.HoughCircles(adjusted, cv2.HOUGH_GRADIENT, 1, 10, param1=40, param2=30, minRadius=5, maxRadius=20)
+        # circles = cv2.HoughCircles(binary_image, cv2.HOUGH_GRADIENT, 1, 10, param1=30, param2=30, minRadius=3, maxRadius=25)
+        circles = cv2.HoughCircles(binary_image, cv2.HOUGH_GRADIENT, dp=1, minDist=10, param1=40, param2=15,
+                                   minRadius=3, maxRadius=25)
+
         if circles is not None:
             circles = np.uint16(np.around(circles))
             for i in circles[0, :]:
@@ -75,8 +97,10 @@ class boardRecognition:
                 # 画圆心
                 # cv2.circle(screenshot_cv, center, 1, (0, 100, 100), 3)
                 # 画圆轮廓
-                radius = i[2]
-                cv2.circle(screenshot_cv, center, radius, (255, 0, 255), 1)
+                if is_show_testResults:
+                    radius = i[2]
+                    cv2.circle(binary_image, center, radius, (255, 0, 255), 1)
+                    cv2.circle(screenshot_cv, center, radius, (255, 0, 255), 1)
                 # 判断是否在coordinates
                 # for X, Y in boardDict:
                 #     if abs(boardDict[(X, Y)][1] - i[0]) < 10 and \
@@ -93,8 +117,10 @@ class boardRecognition:
                         if not update_all:
                             if is_playFirst:
                                 data[0] = 2
+                                print('data[0] = 2')
+                            else:
+                                data[0] = 1
                                 print('data[0] = 1')
-
                             return X, Y
                         else:
                             # 识别颜色
@@ -113,7 +139,13 @@ class boardRecognition:
                                 else:
                                     print(f'更新对手棋子: {X}, {Y}为 黑')
                                     data[0] = 2
-        return -1,-1
+
+        if is_show_testResults:
+            cv2.imshow('Window binary_image', binary_image)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
+
+        return -1, -1
 
     def is_playFirst(self, screenshot_cv):
         # 获取点(x, y)的颜色
@@ -153,13 +185,13 @@ if __name__ == '__main__':
 
     boardDict = bdrc.get_point_coordinates()
 
-    bdrc.find_new_point(screenshot_cv, bdrc.is_playFirst(screenshot_cv), True)
-    # 检查棋盘坐标
-    # displays_points(screenshot_cv, coordinates)
-
-    print(boardDict)
-
-    bdrc.is_playFirst(screenshot_cv)
+    bdrc.find_new_point(screenshot_cv, boardDict, bdrc.is_playFirst(screenshot_cv), True, is_show_testResults=True)
+    # # 检查棋盘坐标
+    # # displays_points(screenshot_cv, coordinates)
+    #
+    # print(boardDict)
+    #
+    # bdrc.is_playFirst(screenshot_cv)
 
     # 显示结果（可选）
     cv2.imshow('Window Screenshot', screenshot_cv)

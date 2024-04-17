@@ -18,7 +18,7 @@ class GomokuInterfaces:
         print('START 15 收到OK确定')
         info = 'INFO max_memory 1073741824' \
                '\nINFO timeout_match 180000' \
-               '\nINFO timeout_turn 1000' \
+               '\nINFO timeout_turn 100' \
                '\nINFO game_type 1' \
                '\nINFO rule 0' \
                '\nINFO time_left 179953' \
@@ -57,22 +57,22 @@ class GomokuInterfaces:
         # if response == 'OK':
         #     print("response == 'OK'")
         #     return response
-        if not response.startswith('DEBUG Thread'):
-            print("not response.startswith('DEBUG Thread')")
-            return False
         if self.check_ends_with_none_zero_zero(response):
             print(f'self.check_ends_with_none_zero_zero')
-            return False
+            return -1, -300
         if self.check_error_opponents_move(response):
             print(f'not self.check_error_opponents_move')
-            return False
+            return -1, -200
+        if not response.startswith('DEBUG Thread'):
+            print("not response.startswith('DEBUG Thread')")
+            return -1, -100
 
         points = self.extract_last_two_numbers(response)
         if points is None:
             print('extract_last_two_numbers error :', points)
-            return False
+            return -1, -99
 
-        # print('points :', points)
+        print('response_processing() -> points :', points)
         return points
 
     def check_error_opponents_move(self, response: str):

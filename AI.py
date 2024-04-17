@@ -13,20 +13,20 @@ class AI:
     def __init__(self):
         self.bdrc = boardRecognition()
         self.window = self.bdrc.window
-        self.boardDict = self.bdrc.get_point_coordinates()
-        self.gomokuInterfaces = self.getReady()
-        self.screen = ''
         self.mouse = MouseController()
+        self.manager: AIProcessManager
+        self.communicator: AICommunicator
+        self.gomokuInterfaces: GomokuInterfaces
 
     def getReady(self):
         executable_path = r"D:\PythonProject\Ai\Gomoku\AI\pbrain-embryo21_e.exe"
-        manager = AIProcessManager(executable_path)
-        stdin, stdout, stderr = manager.start_process()
-        communicator = AICommunicator(stdin, stdout, stderr)
-        interface = CMDInterface(communicator)
+        self.manager = AIProcessManager(executable_path)
+        stdin, stdout, stderr = self.manager.start_process()
+        self.communicator = AICommunicator(stdin, stdout, stderr)
+        interface = CMDInterface(self.communicator)
         time.sleep(0.5)
-        gomokuInterfaces = GomokuInterfaces(communicator)
-        gomokuInterfaces.sendDefault()
+        self.gomokuInterfaces = GomokuInterfaces(self.communicator)
+        self.gomokuInterfaces.sendDefault()
         time.sleep(0.5)
         # print('t', gomokuInterfaces.turn(4, 5))
         # print('b', gomokuInterfaces.begin())
@@ -42,11 +42,12 @@ class AI:
         # interface.run()
         # manager.stop_process()
 
-        return gomokuInterfaces
+    def getend(self):
+        self.manager.stop_process()
+        self.communicator.close()
 
-    def Breaking_through_levels(self):
+    def breaking_through_levels(self):
         """残局闯关"""
-        print('=== 残局闯关 ===')
         '''
         新的一局
         先判断先手存入变量,
@@ -54,37 +55,148 @@ class AI:
         准备ai
         board
         '''
+
+        print('=棋局开始=')
+        # 棋局开始后需等待三秒才能操作
+        time.sleep(3)
         # 获取屏幕
-        self.screen = self.bdrc.get_screen()
+        screen = self.bdrc.get_screen()
 
         # 是否先手
-        is_playFirst = self.bdrc.is_playFirst(self.screen)
+        is_playFirst = self.bdrc.is_playFirst(screen)
 
         # 读取棋盘 然后处理
-        self.bdrc.find_new_point(self.screen, self.boardDict, is_playFirst, True)
+        boardDict = self.bdrc.get_point_coordinates()
+        self.bdrc.find_new_point(screen, boardDict, is_playFirst, True)
         boardlist = []
-        for (X, Y), data in self.boardDict.items():
+        for (X, Y), data in boardDict.items():
             if data[0] != 0:
                 boardlist.append([X, Y, data[0]])
         point = self.gomokuInterfaces.board(boardlist)
         # 操作点击point
         self.mouse.slow_click(self.window.left
-                              + self.boardDict[(int(point[0]), int(point[1]))][1],
+                              + boardDict[(int(point[0]), int(point[1]))][1],
                               self.window.top
-                              + self.boardDict[(int(point[0]), int(point[1]))][2])
-        self.boardDict[(int(point[0]), int(point[1]))][0] = 1
+                              + boardDict[(int(point[0]), int(point[1]))][2])
+        boardDict[(int(point[0]), int(point[1]))][0] = 1
 
         # 循环
         while True:
-            time.sleep(1)
+            time.sleep(1)  # 机器人落子的时间,需等待
+
             self.screen = self.bdrc.get_screen()
-            import cv2
-            x, y = self.bdrc.find_new_point(self.screen, self.boardDict, is_playFirst)
+            while True:
+
+                x, y = self.bdrc.find_new_point(self.screen, boardDict, is_playFirst, is_show_testResults=False)
+                if y != -1:
+                    break
+                else:
+                    time.sleep(1)
             point = self.gomokuInterfaces.turn(x, y)
-            print(point)
+
             # 操作点击point
-            self.mouse.slow_click(self.window.left
-                                  + self.boardDict[(int(point[0]), int(point[1]))][1],
-                                  self.window.top
-                                  + self.boardDict[(int(point[0]), int(point[1]))][2])
-            self.boardDict[(int(point[0]), int(point[1]))][0] = 1
+            if point[0] == -1:
+                if point[1] == -300:
+                    print("结束")
+                    break
+                elif point[1] == -200:
+                    print("输入点位不能被操作")
+                elif point[1] == -100:
+                    print("回复识别出错")
+                elif point[1] == -99:
+                    print("回复点位识别出错")
+                else:
+                    print("未知错误")
+            else:
+                print(f'AI建议落子 -> {point}')
+                try:
+                    self.mouse.slow_click(self.window.left + boardDict[(int(point[0]), int(point[1]))][1],
+                                          self.window.top + boardDict[(int(point[0]), int(point[1]))][2])
+                    boardDict[(int(point[0]), int(point[1]))][0] = 1
+                except KeyError as e:
+                    print(f"操作失败，无法找到点位 {point}: {e}")
+                except Exception as e:
+                    print(f"发生错误: {e}")
+
+        print('while True Done')
+
+    def run_breaking_through_levels(self):
+        while True:
+            self.getReady()
+            print('=== 残局闯关 ===')
+            self.breaking_through_levels()
+            # 下一关
+            time.sleep(2)
+            print('下一关')
+            self.mouse.click(self.window.left + 210, self.window.top + 655)
+            self.getend()
+
+    def pk(self):
+        # 棋力评测
+        print('=棋力评测=')
+        self.getReady()
+
+        # 获取屏幕
+        screen = self.bdrc.get_screen()
+        # 是否先手
+        is_playFirst = self.bdrc.is_playFirst(screen)
+
+        boardDict = self.bdrc.get_point_coordinates()
+
+        if is_playFirst:
+            point = self.gomokuInterfaces.begin()
+        else:
+            self.bdrc.find_new_point(screen, boardDict, is_playFirst, update_all=True)
+            boardlist = []
+            for (X, Y), data in boardDict.items():
+                if data[0] != 0:
+                    boardlist.append([X, Y, data[0]])
+            point = self.gomokuInterfaces.board(boardlist)
+        # 操作点击point
+        self.mouse.slow_click(self.window.left
+                              + boardDict[(int(point[0]), int(point[1]))][1],
+                              self.window.top
+                              + boardDict[(int(point[0]), int(point[1]))][2])
+        boardDict[(int(point[0]), int(point[1]))][0] = 1
+
+        # 循环
+        while True:
+            # time.sleep(3)  # 机器人落子的时间,需等待
+
+            while True:
+
+                self.screen = self.bdrc.get_screen()
+                x, y = self.bdrc.find_new_point(self.screen, boardDict, is_playFirst, is_show_testResults=False)
+                print('find_new_point', x, y)
+                if y != -1:
+                    break
+                else:
+                    time.sleep(1)
+            point = self.gomokuInterfaces.turn(x, y)
+
+            # 操作点击point
+            if point[0] == -1:
+                if point[1] == -300:
+                    print("结束")
+                    break
+                elif point[1] == -200:
+                    print("输入点位不能被操作")
+                elif point[1] == -100:
+                    print("回复识别出错")
+                elif point[1] == -99:
+                    print("回复点位识别出错")
+                else:
+                    print("未知错误")
+            else:
+                print(f'AI建议落子 -> {point}')
+                try:
+                    self.mouse.slow_click(self.window.left + boardDict[(int(point[0]), int(point[1]))][1],
+                                          self.window.top + boardDict[(int(point[0]), int(point[1]))][2])
+                    boardDict[(int(point[0]), int(point[1]))][0] = 1
+                except KeyError as e:
+                    print(f"操作失败，无法找到点位 {point}: {e}")
+                except Exception as e:
+                    print(f"发生错误: {e}")
+
+        print('while True Done')
+        self.getend()

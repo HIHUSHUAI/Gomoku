@@ -13,14 +13,10 @@ class MouseController:
 
     def slow_click(self, x, y, interval=0.2):
         """模拟鼠标慢速单击"""
-        # pyautogui.doubleClick(x, y, interval=interval)
-        pyautogui.click(x, y)
-        time.sleep(interval)
-        pyautogui.click(x, y)
-        time.sleep(interval)
-        pyautogui.click(x, y)
-        time.sleep(interval)
-        pyautogui.click(x, y)
+        pyautogui.doubleClick(x, y, interval=interval)
+        # pyautogui.click(x, y)
+        # time.sleep(interval)
+        # pyautogui.click(x, y)
 
 
     def double_click(self, x, y, interval=0.1):
