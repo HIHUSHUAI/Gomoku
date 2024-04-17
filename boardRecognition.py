@@ -1,3 +1,4 @@
+import time
 from typing import Tuple, Any
 
 import cv2
@@ -175,6 +176,14 @@ class boardRecognition:
             return True
         else:
             print("黑!")
+            return False
+
+    def is_color_match(self, screenshot_cv, x, y, target_color_bgr=(137, 119, 255)):
+        point_color = screenshot_cv[y, x]
+        # print(f'point_color:{point_color}')
+        if np.all(point_color == target_color_bgr):
+            return True
+        else:
             return False
 
 

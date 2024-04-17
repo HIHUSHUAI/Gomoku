@@ -82,12 +82,10 @@ class AI:
 
         # 循环
         while True:
-            time.sleep(1)  # 机器人落子的时间,需等待
-
-            self.screen = self.bdrc.get_screen()
             while True:
-
+                self.screen = self.bdrc.get_screen()
                 x, y = self.bdrc.find_new_point(self.screen, boardDict, is_playFirst, is_show_testResults=False)
+                print('等待对方落子...')
                 if y != -1:
                     break
                 else:
@@ -152,7 +150,6 @@ class AI:
                                   + boardDict[(int(point[0]), int(point[1]))][2])
             boardDict[(int(point[0]), int(point[1]))][0] = 1
 
-
         # 循环
         while True:
             # time.sleep(3)  # 机器人落子的时间,需等待
@@ -161,7 +158,7 @@ class AI:
 
                 self.screen = self.bdrc.get_screen()
                 x, y = self.bdrc.find_new_point(self.screen, boardDict, is_playFirst, is_show_testResults=False)
-                print('find_new_point', x, y)
+                print('等待对方落子...')
                 if y != -1:
                     break
                 else:
@@ -194,3 +191,18 @@ class AI:
 
         print('while True Done')
         self.getend()
+
+    def run_pk(self):
+        while True:
+            self.mouse.click(self.window.left + 210, self.window.top + 410)
+            while True:
+                time.sleep(0.5)
+                screen = self.bdrc.get_screen()
+                if self.bdrc.is_color_match(screen, 210, 450,target_color_bgr=(182, 230, 247)):
+                    break
+                print('正在匹配对手...')
+
+            self.pk()
+            time.sleep(0.8)
+            self.mouse.click(self.window.left + 45, self.window.top + 745)
+            time.sleep(0.2)
