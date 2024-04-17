@@ -145,19 +145,13 @@ class AI:
 
         if is_playFirst:
             point = self.gomokuInterfaces.begin()
-        else:
-            self.bdrc.find_new_point(screen, boardDict, is_playFirst, update_all=True)
-            boardlist = []
-            for (X, Y), data in boardDict.items():
-                if data[0] != 0:
-                    boardlist.append([X, Y, data[0]])
-            point = self.gomokuInterfaces.board(boardlist)
-        # 操作点击point
-        self.mouse.slow_click(self.window.left
-                              + boardDict[(int(point[0]), int(point[1]))][1],
-                              self.window.top
-                              + boardDict[(int(point[0]), int(point[1]))][2])
-        boardDict[(int(point[0]), int(point[1]))][0] = 1
+            # 操作点击point
+            self.mouse.slow_click(self.window.left
+                                  + boardDict[(int(point[0]), int(point[1]))][1],
+                                  self.window.top
+                                  + boardDict[(int(point[0]), int(point[1]))][2])
+            boardDict[(int(point[0]), int(point[1]))][0] = 1
+
 
         # 循环
         while True:

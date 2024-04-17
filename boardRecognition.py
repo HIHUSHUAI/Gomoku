@@ -78,7 +78,7 @@ class boardRecognition:
     def find_new_point(self, screenshot_cv, boardDict, is_playFirst, update_all=False, is_show_testResults=False):
         binary_image_white_and_black = self.get_screen_binarization(screenshot_cv)[2]
         # binary_image = cv2.GaussianBlur(binary_image_white_and_black, (13, 13), 0)
-        binary_image = cv2.GaussianBlur(binary_image_white_and_black, (3, 3), 0)
+        binary_image = cv2.GaussianBlur(binary_image_white_and_black, (7, 7), 0)
         if is_show_testResults:
             cv2.imshow('Window binary_image', binary_image)
             cv2.waitKey(0)
@@ -86,7 +86,7 @@ class boardRecognition:
 
         # 检测圆形
         # circles = cv2.HoughCircles(binary_image, cv2.HOUGH_GRADIENT, 1, 10, param1=30, param2=30, minRadius=3, maxRadius=25)
-        circles = cv2.HoughCircles(binary_image, cv2.HOUGH_GRADIENT, dp=1, minDist=10, param1=40, param2=15,
+        circles = cv2.HoughCircles(binary_image, cv2.HOUGH_GRADIENT, dp=1, minDist=10, param1=30, param2=15,
                                    minRadius=3, maxRadius=25)
 
         if circles is not None:
