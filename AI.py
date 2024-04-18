@@ -58,7 +58,7 @@ class AI:
 
         print('=棋局开始=')
         # 棋局开始后需等待三秒才能操作
-        time.sleep(3)
+        time.sleep(5)
         # 获取屏幕
         screen = self.bdrc.get_screen()
 

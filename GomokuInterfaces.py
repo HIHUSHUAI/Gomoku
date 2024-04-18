@@ -17,8 +17,8 @@ class GomokuInterfaces:
             return False
         print('START 15 收到OK确定')
         info = 'INFO max_memory 1073741824' \
-               '\nINFO timeout_match 180000' \
-               '\nINFO timeout_turn 100' \
+               '\nINFO timeout_match 420000' \
+               '\nINFO timeout_turn 10000' \
                '\nINFO game_type 1' \
                '\nINFO rule 0' \
                '\nINFO time_left 179953' \

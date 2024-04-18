@@ -48,7 +48,7 @@ class boardRecognition:
         gray = cv2.cvtColor(screenshot_cv, cv2.COLOR_BGR2GRAY)
         blur = cv2.GaussianBlur(gray, (3, 3), 0)
         # adjusted = cv2.convertScaleAbs(gray, alpha=1.3, beta=-350)
-        _, binary_image_white = cv2.threshold(blur, 235, 255, cv2.THRESH_BINARY)
+        _, binary_image_white = cv2.threshold(blur, 234, 255, cv2.THRESH_BINARY)
         binary_image_white_ = cv2.bitwise_not(binary_image_white)
         _, binary_image_black = cv2.threshold(blur, 150, 255, cv2.THRESH_BINARY)
         binary_image_white_and_black = cv2.bitwise_xor(binary_image_white_, binary_image_black)
